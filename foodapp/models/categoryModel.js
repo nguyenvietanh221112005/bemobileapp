@@ -1,0 +1,133 @@
+const db = require('../database/db');
+
+class CategoryModel {
+
+    static async getAllCategories(){
+        const [rows] = await db.query(
+            `SELECT * FROM danh_muc ORDER BY ngay_tao DESC`
+        );
+        return rows;
+    }
+
+    static async getProductsByCategoryId(categoryId){
+        const [rows] = await db.query(
+            `SELECT sp.*, 
+                gg.loai, gg.gia_tri,
+                
+                CASE 
+                    WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+                    WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
+                    ELSE sp.gia
+                END AS gia_sau_giam
+                
+            FROM san_pham sp
+            LEFT JOIN giam_gia gg ON sp.id = gg.san_pham_id 
+                AND gg.trang_thai = 1
+                AND gg.ngay_bat_dau <= NOW()
+                AND gg.ngay_ket_thuc >= NOW()
+            WHERE sp.danh_muc_id = ? 
+              AND sp.kich_hoat = 1
+            ORDER BY sp.so_lan_ban DESC`,
+            [categoryId]
+        );
+        return rows;
+    }
+
+    static async getProductsById(productId){
+        const [rows] = await db.query(
+            `SELECT sp.*, 
+                dm.ten_danh_muc,
+                gg.loai, gg.gia_tri, gg.ngay_bat_dau, gg.ngay_ket_thuc,
+                
+                CASE 
+                    WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+                    WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
+                    ELSE sp.gia
+                END AS gia_sau_giam
+                
+            FROM san_pham sp
+            LEFT JOIN danh_muc dm ON sp.danh_muc_id = dm.id
+            LEFT JOIN giam_gia gg ON sp.id = gg.san_pham_id 
+                AND gg.trang_thai = 1
+                AND gg.ngay_bat_dau <= NOW()
+                AND gg.ngay_ket_thuc >= NOW()
+            WHERE sp.id = ?`,
+            [productId]
+        );
+        return rows;
+    }
+
+    static async searchProductById(nameProduct){
+        const [rows] = await db.query(
+            `SELECT sp.*, 
+                gg.loai, gg.gia_tri,
+                
+                CASE 
+                    WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+                    WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
+                    ELSE sp.gia
+                END AS gia_sau_giam
+                
+            FROM san_pham sp
+            LEFT JOIN giam_gia gg ON sp.id = gg.san_pham_id 
+                AND gg.trang_thai = 1
+                AND gg.ngay_bat_dau <= NOW()
+                AND gg.ngay_ket_thuc >= NOW()
+            WHERE (sp.ten LIKE ? OR sp.mo_ta LIKE ?)
+              AND sp.kich_hoat = 1
+            ORDER BY sp.so_lan_ban DESC`,
+            [`%${nameProduct}%`, `%${nameProduct}%`]
+        );
+        return rows;
+    }
+
+    static async getHomeProducts(){
+        const [rows] = await db.query(`
+            SELECT sp.*, 
+                gg.loai, gg.gia_tri,
+
+                CASE 
+                    WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+                    WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
+                    ELSE sp.gia
+                END AS gia_sau_giam
+
+            FROM san_pham sp
+            LEFT JOIN giam_gia gg ON sp.id = gg.san_pham_id 
+                AND gg.trang_thai = 1
+                AND gg.ngay_bat_dau <= NOW()
+                AND gg.ngay_ket_thuc >= NOW()
+
+            WHERE sp.kich_hoat = 1
+              AND sp.trang_thai = 'còn hàng'
+            ORDER BY sp.so_lan_ban DESC
+        `);
+
+        return rows;
+    }
+
+    static async getAllProductSale(){
+        const [rows] = await db.query(
+            `SELECT sp.*, 
+                gg.loai, gg.gia_tri, 
+                gg.ngay_bat_dau, gg.ngay_ket_thuc,
+                
+                CASE 
+                    WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+                    WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
+                END AS gia_sau_giam
+                
+            FROM san_pham sp
+            JOIN giam_gia gg ON sp.id = gg.san_pham_id
+            WHERE gg.trang_thai = 1
+              AND gg.ngay_bat_dau <= NOW()
+              AND gg.ngay_ket_thuc >= NOW()
+              AND sp.kich_hoat = 1
+            ORDER BY gg.gia_tri DESC
+            LIMIT 20`
+        );
+        return rows;
+    }
+}
+
+module.exports = CategoryModel;
