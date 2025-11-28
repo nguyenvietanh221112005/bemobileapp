@@ -81,7 +81,6 @@ class CategoryController {
                 message: 'Tìm kiếm sản phẩm thành công',
                 data: result.data,
                 total: result.total,
-                keyword: result.keyword
             });
         } catch (error) {
             return res.status(400).json({

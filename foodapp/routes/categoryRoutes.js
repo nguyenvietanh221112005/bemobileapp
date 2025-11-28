@@ -7,8 +7,7 @@ const CategoryController = require('../controllers/CategoryController');
 router.get('/', CategoryController.getAllCategories);
 
 // GET /category/:id/products - Lấy sản phẩm theo danh mục
-router.get('/category/:id/products', CategoryController.getProductsByCategory);
-
+router.get('/:id/products', CategoryController.getProductsByCategory);
 
 // ========== SẢN PHẨM ==========
 // QUAN TRỌNG: Route cụ thể phải đặt TRƯỚC route động (:id)

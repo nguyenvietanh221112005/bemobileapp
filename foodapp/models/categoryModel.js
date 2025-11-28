@@ -26,7 +26,7 @@ class CategoryModel {
                 AND gg.ngay_bat_dau <= NOW()
                 AND gg.ngay_ket_thuc >= NOW()
             WHERE sp.danh_muc_id = ? 
-              AND sp.kich_hoat = 1
+              AND sp.trang_thai = còn hàng
             ORDER BY sp.so_lan_ban DESC`,
             [categoryId]
         );
@@ -58,25 +58,53 @@ class CategoryModel {
     }
 
     static async searchProductById(nameProduct){
+        // Tách từng từ để tìm kiếm linh hoạt hơn
+        const keywords = nameProduct.trim().split(/\s+/);
+        
+        // Tạo điều kiện LIKE cho mỗi từ khóa
+        const conditions = keywords.map(() => 
+            '(sp.ten LIKE ? OR sp.mo_ta LIKE ?)'
+        ).join(' AND ');
+        
+        // Tạo mảng params cho mỗi từ khóa
+        const params = keywords.flatMap(keyword => [
+            `%${keyword}%`, 
+            `%${keyword}%`
+        ]);
+
         const [rows] = await db.query(
             `SELECT sp.*, 
+                dm.ten_danh_muc,
                 gg.loai, gg.gia_tri,
                 
                 CASE 
                     WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
                     WHEN gg.loai = 'fixed' THEN sp.gia - gg.gia_tri
                     ELSE sp.gia
-                END AS gia_sau_giam
+                END AS gia_sau_giam,
+                
+                -- Tính điểm relevance để sắp xếp kết quả
+                CASE
+                    WHEN sp.ten LIKE ? THEN 100
+                    WHEN sp.ten LIKE ? THEN 50
+                    ELSE 10
+                END AS relevance_score
                 
             FROM san_pham sp
+            LEFT JOIN danh_muc dm ON sp.danh_muc_id = dm.id
             LEFT JOIN giam_gia gg ON sp.id = gg.san_pham_id 
                 AND gg.trang_thai = 1
                 AND gg.ngay_bat_dau <= NOW()
                 AND gg.ngay_ket_thuc >= NOW()
-            WHERE (sp.ten LIKE ? OR sp.mo_ta LIKE ?)
-              AND sp.kich_hoat = 1
-            ORDER BY sp.so_lan_ban DESC`,
-            [`%${nameProduct}%`, `%${nameProduct}%`]
+            WHERE ${conditions}
+            AND trang_thai=còn hàng
+            ORDER BY relevance_score DESC, sp.so_lan_ban DESC
+            LIMIT 50`,
+            [
+                `${nameProduct}%`,        // Bắt đầu bằng từ khóa (điểm cao nhất)
+                `%${nameProduct}%`,       // Chứa từ khóa
+                ...params                 // Tất cả từ khóa riêng lẻ
+            ]
         );
         return rows;
     }
@@ -98,8 +126,8 @@ class CategoryModel {
                 AND gg.ngay_bat_dau <= NOW()
                 AND gg.ngay_ket_thuc >= NOW()
 
-            WHERE sp.kich_hoat = 1
-              AND sp.trang_thai = 'còn hàng'
+            WHERE 
+               sp.trang_thai = 'còn hàng'
             ORDER BY sp.so_lan_ban DESC
         `);
 
@@ -122,7 +150,7 @@ class CategoryModel {
             WHERE gg.trang_thai = 1
               AND gg.ngay_bat_dau <= NOW()
               AND gg.ngay_ket_thuc >= NOW()
-              AND sp.kich_hoat = 1
+              
             ORDER BY gg.gia_tri DESC
             LIMIT 20`
         );
