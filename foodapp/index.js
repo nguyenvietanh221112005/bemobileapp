@@ -9,7 +9,8 @@ const userRoutes = require('./routes/userRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const cartRoutes=require('./routes/cartRoutes');
-const orderRoutes=require('./routes/orderRoutes')
+const orderRoutes=require('./routes/orderRoutes');
+const adminRoutes=require('./routes/adminRoutes');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/favorite', favoriteRoutes);
 app.use('/api/category',categoryRoutes);
 app.use('/api/cart',cartRoutes)
 app.use('/api/order',orderRoutes)
+app.use('/api/admin',adminRoutes)
 
 // Server start
 const PORT = 5000;

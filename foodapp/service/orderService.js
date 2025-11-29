@@ -9,7 +9,7 @@ class OrderService {
       }
 
       const donHangId = await Order.create(nguoiDungId, diaChiId, ghiChu);
-      const order = await Order.getById(donHangId, nguoiDungId);
+      const order = await Order.getDetailById(donHangId, nguoiDungId);
 
       return {
         success: true,
@@ -21,32 +21,46 @@ class OrderService {
     }
   }
 
-  // Lấy lịch sử đơn hàng
-  async getOrderHistory(nguoiDungId, filters = {}) {
+  // Lấy danh sách đơn hàng theo trạng thái cụ thể (hiển thị riêng)
+  async getOrdersByStatus(nguoiDungId, trangThai, page = 1, limit = 10) {
     try {
-      const { trang_thai, page = 1, limit = 10 } = filters;
-      
-      const result = await Order.getHistory(
+      const validStatuses = [
+        'chờ xác nhận',
+        'hoàn tất đặt hàng',
+        'chuẩn bị',
+        'đang giao hàng',
+        'đã giao hàng',
+        'đã hủy'
+      ];
+
+      if (!validStatuses.includes(trangThai)) {
+        throw new Error('Trạng thái không hợp lệ');
+      }
+
+      const result = await Order.getByStatus(
         nguoiDungId,
-        trang_thai,
+        trangThai,
         parseInt(page),
         parseInt(limit)
       );
 
       return {
         success: true,
-        data: result.orders,
-        pagination: result.pagination
+        data: {
+          trang_thai: trangThai,
+          don_hang: result.orders,
+          pagination: result.pagination
+        }
       };
     } catch (error) {
       throw error;
     }
   }
 
-  // Chi tiết đơn hàng
+  // Chi tiết đơn hàng đầy đủ
   async getOrderDetail(donHangId, nguoiDungId) {
     try {
-      const order = await Order.getById(donHangId, nguoiDungId);
+      const order = await Order.getDetailById(donHangId, nguoiDungId);
 
       if (!order) {
         throw new Error('Không tìm thấy đơn hàng');
@@ -78,8 +92,7 @@ class OrderService {
   // Xác nhận giao hàng thành công
   async acceptDelivery(donHangId, nguoiDungId) {
     try {
-      // Kiểm tra đơn hàng có phải đang giao không
-      const order = await Order.getById(donHangId, nguoiDungId);
+      const order = await Order.getDetailById(donHangId, nguoiDungId);
       
       if (!order) {
         throw new Error('Không tìm thấy đơn hàng');
@@ -100,18 +113,18 @@ class OrderService {
     }
   }
 
-  // Thống kê đơn hàng theo trạng thái
+  // Thống kê số lượng đơn hàng theo từng trạng thái
   async getOrderStatistics(nguoiDungId) {
     try {
       const stats = await Order.countByStatus(nguoiDungId);
       
-      // Format thành object dễ đọc
       const result = {
         'chờ xác nhận': 0,
         'hoàn tất đặt hàng': 0,
         'chuẩn bị': 0,
         'đang giao hàng': 0,
-        'đã giao hàng': 0
+        'đã giao hàng': 0,
+        'đã hủy': 0
       };
 
       stats.forEach(stat => {

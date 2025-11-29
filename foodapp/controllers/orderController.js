@@ -1,7 +1,7 @@
 const orderService = require('../service/orderService');
 
 class OrderController {
-  // POST /order - Tạo đơn hàng
+  // POST /order - Tạo đơn hàng mới
   async createOrder(req, res) {
     try {
       const { nguoi_dung_id, dia_chi_id, ghi_chu } = req.body;
@@ -24,10 +24,13 @@ class OrderController {
     }
   }
 
-  // GET /order/history - Lấy lịch sử đơn hàng
-  async getOrderHistory(req, res) {
+  // GET /order/status/:status - Lấy danh sách đơn hàng theo trạng thái cụ thể
+  // Ví dụ: /order/status/chờ xác nhận?page=1&limit=10
+  async getOrdersByStatus(req, res) {
     try {
-      const { nguoi_dung_id, trang_thai, page, limit } = req.query;
+      const { status } = req.params;
+      const { nguoi_dung_id } = req.query;
+      const { page = 1, limit = 10 } = req.query;
 
       if (!nguoi_dung_id) {
         return res.status(400).json({
@@ -36,22 +39,26 @@ class OrderController {
         });
       }
 
-      const result = await orderService.getOrderHistory(nguoi_dung_id, {
-        trang_thai,
+      // Decode URL-encoded status (để xử lý trạng thái có khoảng trắng)
+      const decodedStatus = decodeURIComponent(status);
+
+      const result = await orderService.getOrdersByStatus(
+        nguoi_dung_id,
+        decodedStatus,
         page,
         limit
-      });
+      );
 
       res.json(result);
     } catch (error) {
-      res.status(500).json({
+      res.status(400).json({
         success: false,
         message: error.message
       });
     }
   }
 
-  // GET /order/statistics - Thống kê đơn hàng
+  // GET /order/statistics - Thống kê số lượng đơn hàng theo trạng thái
   async getOrderStatistics(req, res) {
     try {
       const { nguoi_dung_id } = req.query;
@@ -74,7 +81,7 @@ class OrderController {
     }
   }
 
-  // GET /order/:id - Chi tiết đơn hàng
+  // GET /order/:id - Chi tiết đơn hàng đầy đủ
   async getOrderDetail(req, res) {
     try {
       const { id } = req.params;

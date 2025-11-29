@@ -70,7 +70,7 @@ class Order {
 
       const donHangId = result.insertId;
 
-      // Thêm chi tiết đơn hàng
+      // Thêm chi tiết đơn hàng (KHÔNG lưu anh_url)
       for (const item of items) {
         let donGia = parseFloat(item.gia);
         
@@ -111,40 +111,47 @@ class Order {
     }
   }
 
-  // Lấy lịch sử đơn hàng theo trạng thái
-  static async getHistory(nguoiDungId, trangThai = null, page = 1, limit = 10) {
+  // Lấy danh sách đơn hàng theo trạng thái (JOIN để lấy ảnh từ bảng san_pham)
+  static async getByStatus(nguoiDungId, trangThai, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
     
-    let query = `
-      SELECT dh.id, dh.tong_tien, dh.trang_thai, dh.ghi_chu, dh.ngay_tao,
-             dc.ten_nhan, dc.so_dien_thoai, dc.dia_chi_chi_tiet, dc.phuong_xa, dc.quan_huyen, dc.thanh_pho
+    const query = `
+      SELECT 
+        dh.id,
+        dh.tong_tien,
+        dh.trang_thai,
+        dh.ghi_chu,
+        dh.ngay_tao,
+        COUNT(dhct.id) as tong_san_pham,
+        (
+          SELECT sp.anh_url 
+          FROM don_hang_chi_tiet dhct2 
+          LEFT JOIN san_pham sp ON dhct2.san_pham_id = sp.id
+          WHERE dhct2.don_hang_id = dh.id 
+          ORDER BY dhct2.id ASC 
+          LIMIT 1
+        ) as anh_dai_dien,
+        GROUP_CONCAT(
+          CONCAT(dhct.ten_san_pham, ' x', dhct.so_luong) 
+          ORDER BY dhct.id ASC 
+          SEPARATOR ', '
+        ) as tom_tat_san_pham
       FROM don_hang dh
-      LEFT JOIN dia_chi dc ON dh.dia_chi_id = dc.id
-      WHERE dh.nguoi_dung_id = ?
+      LEFT JOIN don_hang_chi_tiet dhct ON dh.id = dhct.don_hang_id
+      WHERE dh.nguoi_dung_id = ? AND dh.trang_thai = ?
+      GROUP BY dh.id
+      ORDER BY dh.ngay_tao DESC
+      LIMIT ? OFFSET ?
     `;
-    
-    const params = [nguoiDungId];
-    
-    if (trangThai) {
-      query += ' AND dh.trang_thai = ?';
-      params.push(trangThai);
-    }
-    
-    query += ' ORDER BY dh.ngay_tao DESC LIMIT ? OFFSET ?';
-    params.push(limit, offset);
 
-    const [orders] = await db.query(query, params);
+    const [orders] = await db.query(query, [nguoiDungId, trangThai, limit, offset]);
 
-    // Đếm tổng số đơn hàng
-    let countQuery = 'SELECT COUNT(*) as total FROM don_hang WHERE nguoi_dung_id = ?';
-    const countParams = [nguoiDungId];
+    // Đếm tổng số đơn hàng theo trạng thái
+    const [countResult] = await db.query(
+      'SELECT COUNT(*) as total FROM don_hang WHERE nguoi_dung_id = ? AND trang_thai = ?',
+      [nguoiDungId, trangThai]
+    );
     
-    if (trangThai) {
-      countQuery += ' AND trang_thai = ?';
-      countParams.push(trangThai);
-    }
-    
-    const [countResult] = await db.query(countQuery, countParams);
     const total = countResult[0].total;
 
     return {
@@ -158,12 +165,24 @@ class Order {
     };
   }
 
-  // Chi tiết đơn hàng
-  static async getById(donHangId, nguoiDungId) {
+  // Chi tiết đơn hàng đầy đủ (JOIN để lấy ảnh từ bảng san_pham)
+  static async getDetailById(donHangId, nguoiDungId) {
+    // Lấy thông tin đơn hàng và địa chỉ
     const [orders] = await db.query(
-      `SELECT dh.*, 
-              dc.ten_nhan, dc.so_dien_thoai, dc.dia_chi_chi_tiet, 
-              dc.phuong_xa, dc.quan_huyen, dc.thanh_pho
+      `SELECT 
+        dh.id,
+        dh.nguoi_dung_id,
+        dh.tong_tien,
+        dh.trang_thai,
+        dh.ghi_chu,
+        dh.ngay_tao,
+        dc.id as dia_chi_id,
+        dc.ten_nhan,
+        dc.so_dien_thoai,
+        dc.dia_chi_chi_tiet,
+        dc.phuong_xa,
+        dc.quan_huyen,
+        dc.thanh_pho
        FROM don_hang dh
        LEFT JOIN dia_chi dc ON dh.dia_chi_id = dc.id
        WHERE dh.id = ? AND dh.nguoi_dung_id = ?`,
@@ -176,17 +195,50 @@ class Order {
 
     const order = orders[0];
 
-    // Lấy chi tiết sản phẩm
+    // Lấy chi tiết sản phẩm (JOIN với bảng san_pham để lấy ảnh)
     const [items] = await db.query(
-      `SELECT dhct.*, sp.anh_url
+      `SELECT 
+        dhct.id,
+        dhct.san_pham_id,
+        dhct.ten_san_pham,
+        dhct.don_gia,
+        dhct.so_luong,
+        sp.anh_url,
+        (dhct.don_gia * dhct.so_luong) as thanh_tien
        FROM don_hang_chi_tiet dhct
        LEFT JOIN san_pham sp ON dhct.san_pham_id = sp.id
-       WHERE dhct.don_hang_id = ?`,
+       WHERE dhct.don_hang_id = ?
+       ORDER BY dhct.id ASC`,
       [donHangId]
     );
 
-    order.chi_tiet = items;
-    return order;
+    // Format địa chỉ đầy đủ
+    const diaChiDayDu = [
+      order.dia_chi_chi_tiet,
+      order.phuong_xa,
+      order.quan_huyen,
+      order.thanh_pho
+    ].filter(Boolean).join(', ');
+
+    return {
+      id: order.id,
+      nguoi_dung_id: order.nguoi_dung_id,
+      tong_tien: order.tong_tien,
+      trang_thai: order.trang_thai,
+      ghi_chu: order.ghi_chu,
+      ngay_tao: order.ngay_tao,
+      dia_chi_giao_hang: {
+        dia_chi_id: order.dia_chi_id,
+        ten_nhan: order.ten_nhan,
+        so_dien_thoai: order.so_dien_thoai,
+        dia_chi_chi_tiet: order.dia_chi_chi_tiet,
+        phuong_xa: order.phuong_xa,
+        quan_huyen: order.quan_huyen,
+        thanh_pho: order.thanh_pho,
+        dia_chi_day_du: diaChiDayDu
+      },
+      san_pham: items
+    };
   }
 
   // Hủy đơn hàng
@@ -207,14 +259,13 @@ class Order {
       throw new Error('Không thể hủy đơn hàng ở trạng thái này');
     }
 
-    // Có thể thêm trạng thái "đã hủy" vào ENUM nếu muốn
-    // Hiện tại chỉ xóa đơn hàng
+    // Xóa đơn hàng (hoặc có thể thêm trạng thái "đã hủy" vào ENUM)
     await db.query('DELETE FROM don_hang WHERE id = ?', [donHangId]);
 
     return true;
   }
 
-  // Cập nhật trạng thái đơn hàng (cho admin hoặc hệ thống)
+  // Cập nhật trạng thái đơn hàng
   static async updateStatus(donHangId, trangThaiMoi, nguoiDungId = null) {
     const validStatuses = [
       'chờ xác nhận',
