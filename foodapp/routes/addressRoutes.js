@@ -9,7 +9,7 @@ router.get('/:nguoi_dung_id', AddressController.getAddressByUserId);
 router.put('/:id', AddressController.updateAddressById);
 // addressRoutes.js
 router.post('/', AddressController.createAddress);
-router.delete('/:id', AddressController.deleteAddress);
-router.put('/default/:id', AddressController.setDefaultAddress);
+router.delete('/:id/:nguoi_dung_id', AddressController.deleteAddress);
+
 
 module.exports = router;

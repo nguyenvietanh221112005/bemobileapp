@@ -77,7 +77,7 @@ class CartController {
     }
   }
 
-  // PUT /cart/update/:nguoi_dung_id - Cập nhật số lượng
+  // PUT /cart/update-product/:nguoi_dung_id - Cập nhật số lượng
   async updateCartByProduct(req, res) {
   try {
     const { nguoi_dung_id } = req.params;

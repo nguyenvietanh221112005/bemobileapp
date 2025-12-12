@@ -45,27 +45,15 @@ class AddressController {
 
 
     static async deleteAddress(req, res) {
-        try {
-            const { id } = req.params; // chỉ cần id
-            const result = await AddressService.removeAddress(id);
-            res.json(result);
-        } catch (err) {
-            res.status(400).json({ success: false, message: err.message });
-        }
+    try {
+        const { id, nguoi_dung_id } = req.params;
+
+        const result = await AddressService.removeAddress(id, nguoi_dung_id);
+        res.json(result);
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
     }
-
-
-    static async setDefaultAddress(req, res) {
-        try {
-            const { id } = req.params;
-            const { nguoi_dung_id } = req.body; // FE gửi user id
-            const result = await AddressService.setDefault(id, nguoi_dung_id);
-            res.json(result);
-        } catch (err) {
-            res.status(400).json({ success: false, message: err.message });
-        }
-    }
-
+}
 
 }
 

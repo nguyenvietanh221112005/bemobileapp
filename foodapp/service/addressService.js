@@ -33,22 +33,19 @@ class AddressService {
         return { success: true, message: 'Thêm địa chỉ thành công', data: [address] };
     }
 
-    static async removeAddress(id) {
-        const deleted = await AddressModel.deleteAddressById(id);
-        if (!deleted) {
-            throw new Error('Xóa địa chỉ thất bại hoặc không tìm thấy id');
-        }
-        return { success: true, message: 'Xóa địa chỉ thành công' };
-    }
+    static async removeAddress(id, nguoi_dung_id) {
+  const deleted = await AddressModel.deleteAddressById(id, nguoi_dung_id);
+
+  if (!deleted) {
+    throw new Error('Xóa địa chỉ thất bại hoặc không tìm thấy id hoặc không thuộc người dùng');
+  }
+
+  return { success: true, message: 'Xóa địa chỉ thành công' };
+}
 
 
-    static async setDefault(id, nguoi_dung_id) {
-        const success = await AddressModel.setDefaultAddress(id, nguoi_dung_id);
-        if (!success) {
-            throw new Error('Đặt địa chỉ mặc định thất bại hoặc không tìm thấy id');
-        }
-        return { success: true, message: 'Đặt địa chỉ mặc định thành công' };
-    }
+
+   
 
 
 }
