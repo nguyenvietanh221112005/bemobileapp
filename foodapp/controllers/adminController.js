@@ -54,10 +54,53 @@ class ProductController {
       });
     }
   }
+
+  static async getAllProducts(req, res) {
+  try {
+    const { page = 1, limit = 10, danh_muc_id } = req.query;
+    const result = await ProductService.getAllProducts({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      danh_muc_id
+    });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
 }
 
 // ==================== SALE CONTROLLER ====================
 class SaleController {
+
+  static async getAllSales(req, res) {
+  try {
+    const result = await SaleService.getAllSales();
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+}
+
+
+  static async getSaleProducts(req, res) {
+  try {
+    const result = await SaleService.getSaleProducts();
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
   static async createSale(req, res) {
     try {
       const result = await SaleService.createSale(req.body);
@@ -124,6 +167,21 @@ class OrderController {
       });
     }
   }
+
+  // controllers/OrderController.js
+static async getOrderDetail(req, res) {
+  try {
+    const { id } = req.params;
+    const result = await OrderService.getOrderDetail(id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+}
+
 }
 
 // ==================== STATISTICS CONTROLLER ====================

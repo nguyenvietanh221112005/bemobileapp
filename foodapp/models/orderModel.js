@@ -243,27 +243,44 @@ class Order {
 
   // Hủy đơn hàng
   static async cancel(donHangId, nguoiDungId) {
-    const [orders] = await db.query(
-      'SELECT trang_thai FROM don_hang WHERE id = ? AND nguoi_dung_id = ?',
-      [donHangId, nguoiDungId]
-    );
+  // 1. Lấy trạng thái hiện tại
+  const [orders] = await db.query(
+    'SELECT trang_thai FROM don_hang WHERE id = ? AND nguoi_dung_id = ?',
+    [donHangId, nguoiDungId]
+  );
 
-    if (!orders.length) {
-      throw new Error('Không tìm thấy đơn hàng');
-    }
-
-    const trangThai = orders[0].trang_thai;
-    const allowedStatuses = ['chờ xác nhận', 'hoàn tất đặt hàng'];
-
-    if (!allowedStatuses.includes(trangThai)) {
-      throw new Error('Không thể hủy đơn hàng ở trạng thái này');
-    }
-
-    // Xóa đơn hàng (hoặc có thể thêm trạng thái "đã hủy" vào ENUM)
-    await db.query('DELETE FROM don_hang WHERE id = ?', [donHangId]);
-
-    return true;
+  if (!orders.length) {
+    throw new Error('Không tìm thấy đơn hàng');
   }
+
+  const trangThai = orders[0].trang_thai;
+
+  // 2. Chỉ cho hủy khi chưa giao
+  const allowedStatuses = [
+    'chờ xác nhận',
+    'hoàn tất đặt hàng'
+  ];
+
+  if (!allowedStatuses.includes(trangThai)) {
+    throw new Error('Không thể hủy đơn hàng ở trạng thái này');
+  }
+
+  // 3. Cập nhật trạng thái -> đã hủy
+  const [result] = await db.query(
+    'UPDATE don_hang SET trang_thai = ? WHERE id = ?',
+    ['đã hủy', donHangId]
+  );
+
+  if (result.affectedRows === 0) {
+    throw new Error('Hủy đơn hàng thất bại');
+  }
+
+  return {
+    success: true,
+    message: 'Đơn hàng đã được hủy'
+  };
+}
+
 
   // Cập nhật trạng thái đơn hàng
   static async updateStatus(donHangId, trangThaiMoi, nguoiDungId = null) {

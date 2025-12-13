@@ -55,10 +55,95 @@ class ProductModel {
     const [rows] = await db.execute(query, [id]);
     return rows[0];
   }
+  static async getAll(limit, offset, danh_muc_id) {
+  let query = `
+    SELECT 
+      sp.*,
+      dm.ten_danh_muc,
+      gg.loai AS giam_gia_loai,
+      gg.gia_tri AS giam_gia_gia_tri
+    FROM san_pham sp
+    LEFT JOIN danh_muc dm ON sp.danh_muc_id = dm.id
+    LEFT JOIN giam_gia gg 
+      ON sp.id = gg.san_pham_id 
+      AND gg.trang_thai = 1
+      AND NOW() BETWEEN gg.ngay_bat_dau AND gg.ngay_ket_thuc
+    WHERE 1=1
+  `;
+
+  const params = [];
+
+  if (danh_muc_id) {
+    query += ' AND sp.danh_muc_id = ?';
+    params.push(danh_muc_id);
+  }
+
+  query += ' ORDER BY sp.ngay_tao DESC LIMIT ? OFFSET ?';
+  params.push(limit, offset);
+
+  const [rows] = await db.execute(query, params);
+  return rows;
+}
+
+
+static async countAll(danh_muc_id) {
+  let query = 'SELECT COUNT(*) as total FROM san_pham WHERE 1=1';
+  const params = [];
+
+  if (danh_muc_id) {
+    query += ' AND danh_muc_id = ?';
+    params.push(danh_muc_id);
+  }
+
+  const [rows] = await db.execute(query, params);
+  return rows[0].total;
+}
+
 }
 
 // ==================== SALE MODEL ====================
 class SaleModel {
+
+  static async getAllSales() {
+  const query = `
+    SELECT 
+      gg.id,
+      gg.san_pham_id,
+      sp.ten AS ten_san_pham,
+      gg.loai,
+      gg.gia_tri,
+      gg.ngay_bat_dau,
+      gg.ngay_ket_thuc,
+      gg.trang_thai
+    FROM giam_gia gg
+    JOIN san_pham sp ON sp.id = gg.san_pham_id
+    ORDER BY gg.id DESC
+  `;
+  const [rows] = await db.execute(query);
+  return rows;
+}
+
+  static async getSaleProducts() {
+  const query = `
+    SELECT 
+      sp.*,
+      gg.loai,
+      gg.gia_tri,
+      CASE 
+        WHEN gg.loai = 'percent' THEN sp.gia - (sp.gia * gg.gia_tri / 100)
+        ELSE sp.gia - gg.gia_tri
+      END AS gia_sau_giam
+    FROM san_pham sp
+    INNER JOIN giam_gia gg ON sp.id = gg.san_pham_id
+    WHERE gg.trang_thai = 1
+      AND NOW() BETWEEN gg.ngay_bat_dau AND gg.ngay_ket_thuc
+      AND sp.trang_thai = 'còn hàng'
+    ORDER BY gg.gia_tri DESC
+  `;
+  const [rows] = await db.execute(query);
+  return rows;
+}
+
   static async create(saleData) {
     const query = `
       INSERT INTO giam_gia (san_pham_id, loai, gia_tri, ngay_bat_dau, ngay_ket_thuc, trang_thai)
@@ -162,6 +247,23 @@ class OrderModel {
     const [result] = await db.execute(query, [status, id]);
     return result.affectedRows;
   }
+
+  // models/OrderModel.js
+static async getOrderDetails(orderId) {
+  const query = `
+    SELECT 
+      ctdh.id,
+      ctdh.so_luong,
+      ctdh.don_gia,
+      sp.ten AS ten_san_pham
+    FROM don_hang_chi_tiet ctdh
+    JOIN san_pham sp ON ctdh.san_pham_id = sp.id
+    WHERE ctdh.don_hang_id = ?
+  `;
+  const [rows] = await db.execute(query, [orderId]);
+  return rows;
+}
+
 }
 
 // ==================== STATISTICS MODEL ====================

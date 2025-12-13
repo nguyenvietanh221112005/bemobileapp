@@ -91,10 +91,41 @@ class ProductService {
       throw error;
     }
   }
+  static async getAllProducts({ page, limit, danh_muc_id }) {
+  const offset = (page - 1) * limit;
+  const products = await ProductModel.getAll(limit, offset, danh_muc_id);
+  const total = await ProductModel.countAll(danh_muc_id);
+
+  return {
+    success: true,
+    page,
+    limit,
+    total,
+    data: products
+  };
+}
 }
 
 // ==================== SALE SERVICE ====================
 class SaleService {
+
+  static async getAllSales() {
+  const sales = await SaleModel.getAllSales();
+  return {
+    success: true,
+    data: sales
+  };
+}
+
+
+  static async getSaleProducts() {
+  const products = await SaleModel.getSaleProducts();
+  return {
+    success: true,
+    data: products
+  };
+}
+
   static async createSale(saleData) {
     try {
       if (!saleData.san_pham_id || !saleData.loai || !saleData.gia_tri) {
@@ -184,12 +215,11 @@ class OrderService {
   static async updateOrderStatus(id, status) {
     try {
       const validStatuses = [
-        'chờ xác nhận',
         'hoàn tất đặt hàng',
         'chuẩn bị',
         'đang giao hàng',
         'đã giao hàng',
-        'hủy đơn'
+        'đã hủy'
       ];
 
       if (!validStatuses.includes(status)) {
@@ -216,6 +246,23 @@ class OrderService {
       throw error;
     }
   }
+
+  // services/OrderService.js
+static async getOrderDetail(orderId) {
+  const order = await OrderModel.findById(orderId);
+  if (!order) throw new Error('Đơn hàng không tồn tại');
+
+  const items = await OrderModel.getOrderDetails(orderId);
+
+  return {
+    success: true,
+    data: {
+      order,
+      items
+    }
+  };
+}
+
 }
 
 // ==================== STATISTICS SERVICE ====================
