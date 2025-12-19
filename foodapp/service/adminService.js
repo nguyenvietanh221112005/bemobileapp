@@ -1,19 +1,19 @@
 // services/index.js
-const { ProductModel, SaleModel, OrderModel, StatisticsModel } = require('../models/adminModel');
+const { ProductModel, SaleModel, OrderModel, StatisticsModel } = require("../models/adminModel");
 
 // ==================== PRODUCT SERVICE ====================
 class ProductService {
   static async createProduct(productData) {
     try {
       if (!productData.ten || !productData.gia) {
-        throw new Error('Thiếu thông tin bắt buộc');
+        throw new Error("Thiếu thông tin bắt buộc");
       }
 
       const productId = await ProductModel.create(productData);
       return {
         success: true,
-        message: 'Thêm sản phẩm thành công',
-        data: { id: productId }
+        message: "Thêm sản phẩm thành công",
+        data: { id: productId },
       };
     } catch (error) {
       throw error;
@@ -24,18 +24,18 @@ class ProductService {
     try {
       const product = await ProductModel.findById(id);
       if (!product) {
-        throw new Error('Sản phẩm không tồn tại');
+        throw new Error("Sản phẩm không tồn tại");
       }
 
       const affectedRows = await ProductModel.update(id, productData);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Cập nhật thất bại');
+        throw new Error("Cập nhật thất bại");
       }
 
       return {
         success: true,
-        message: 'Cập nhật sản phẩm thành công'
+        message: "Cập nhật sản phẩm thành công",
       };
     } catch (error) {
       throw error;
@@ -46,18 +46,18 @@ class ProductService {
     try {
       const product = await ProductModel.findById(id);
       if (!product) {
-        throw new Error('Sản phẩm không tồn tại');
+        throw new Error("Sản phẩm không tồn tại");
       }
 
       const affectedRows = await ProductModel.delete(id);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Xóa thất bại');
+        throw new Error("Xóa thất bại");
       }
 
       return {
         success: true,
-        message: 'Xóa sản phẩm thành công'
+        message: "Xóa sản phẩm thành công",
       };
     } catch (error) {
       throw error;
@@ -66,82 +66,77 @@ class ProductService {
 
   static async updateProductStatus(id, status) {
     try {
-      const validStatuses = ['còn hàng', 'hết hàng'];
+      const validStatuses = ["còn hàng", "hết hàng"];
       if (!validStatuses.includes(status)) {
-        throw new Error('Trạng thái không hợp lệ');
+        throw new Error("Trạng thái không hợp lệ");
       }
 
       const product = await ProductModel.findById(id);
       if (!product) {
-        throw new Error('Sản phẩm không tồn tại');
+        throw new Error("Sản phẩm không tồn tại");
       }
 
       const affectedRows = await ProductModel.updateStatus(id, status);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Cập nhật trạng thái thất bại');
+        throw new Error("Cập nhật trạng thái thất bại");
       }
 
       return {
         success: true,
-        message: 'Cập nhật trạng thái thành công',
-        data: { status }
+        message: "Cập nhật trạng thái thành công",
+        data: { status },
       };
     } catch (error) {
       throw error;
     }
   }
-  static async getAllProducts({ page, limit, danh_muc_id }) {
-  const offset = (page - 1) * limit;
-  const products = await ProductModel.getAll(limit, offset, danh_muc_id);
-  const total = await ProductModel.countAll(danh_muc_id);
+  static async getAllProducts({ danh_muc_id }) {
+    const products = await ProductModel.getAll(danh_muc_id);
+    const total = await ProductModel.countAll(danh_muc_id);
 
-  return {
-    success: true,
-    page,
-    limit,
-    total,
-    data: products
-  };
-}
+    return {
+      success: true,
+      total,
+      data: products,
+    };
+  }
 }
 
 // ==================== SALE SERVICE ====================
 class SaleService {
-
   static async getAllSales() {
-  const sales = await SaleModel.getAllSales();
-  return {
-    success: true,
-    data: sales
-  };
-}
-
+    const sales = await SaleModel.getAllSales();
+    return {
+      success: true,
+      data: sales,
+    };
+  }
 
   static async getSaleProducts() {
-  const products = await SaleModel.getSaleProducts();
-  return {
-    success: true,
-    data: products
-  };
-}
+    const products = await SaleModel.getSaleProducts();
+    return {
+      success: true,
+      data: products,
+    };
+  }
 
   static async createSale(saleData) {
     try {
       if (!saleData.san_pham_id || !saleData.loai || !saleData.gia_tri) {
-        throw new Error('Thiếu thông tin bắt buộc');
+        throw new Error("Thiếu thông tin bắt buộc");
       }
 
-      const validTypes = ['percent', 'fixed'];
+      const validTypes = ["percent", "fixed"];
       if (!validTypes.includes(saleData.loai)) {
-        throw new Error('Loại giảm giá không hợp lệ');
+        throw new Error("Loại giảm giá không hợp lệ");
       }
 
       const saleId = await SaleModel.create(saleData);
       return {
         success: true,
-        message: 'Thêm giảm giá thành công',
-        data: { id: saleId }
+        message: "Thêm giảm giá thành công",
+        data: { id: saleId },
       };
     } catch (error) {
       throw error;
@@ -152,23 +147,23 @@ class SaleService {
     try {
       const sale = await SaleModel.findById(id);
       if (!sale) {
-        throw new Error('Giảm giá không tồn tại');
+        throw new Error("Giảm giá không tồn tại");
       }
 
-      const validTypes = ['percent', 'fixed'];
+      const validTypes = ["percent", "fixed"];
       if (saleData.loai && !validTypes.includes(saleData.loai)) {
-        throw new Error('Loại giảm giá không hợp lệ');
+        throw new Error("Loại giảm giá không hợp lệ");
       }
 
       const affectedRows = await SaleModel.update(id, saleData);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Cập nhật thất bại');
+        throw new Error("Cập nhật thất bại");
       }
 
       return {
         success: true,
-        message: 'Cập nhật giảm giá thành công'
+        message: "Cập nhật giảm giá thành công",
       };
     } catch (error) {
       throw error;
@@ -179,18 +174,18 @@ class SaleService {
     try {
       const sale = await SaleModel.findById(id);
       if (!sale) {
-        throw new Error('Giảm giá không tồn tại');
+        throw new Error("Giảm giá không tồn tại");
       }
 
       const affectedRows = await SaleModel.delete(id);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Xóa thất bại');
+        throw new Error("Xóa thất bại");
       }
 
       return {
         success: true,
-        message: 'Xóa giảm giá thành công'
+        message: "Xóa giảm giá thành công",
       };
     } catch (error) {
       throw error;
@@ -205,7 +200,7 @@ class OrderService {
       const orders = await OrderModel.getAll();
       return {
         success: true,
-        data: orders
+        data: orders,
       };
     } catch (error) {
       throw error;
@@ -214,33 +209,27 @@ class OrderService {
 
   static async updateOrderStatus(id, status) {
     try {
-      const validStatuses = [
-        'hoàn tất đặt hàng',
-        'chuẩn bị',
-        'đang giao hàng',
-        'đã giao hàng',
-        'đã hủy'
-      ];
+      const validStatuses = ["hoàn tất đặt hàng", "chuẩn bị", "đang giao hàng", "đã giao hàng", "đã hủy"];
 
       if (!validStatuses.includes(status)) {
-        throw new Error('Trạng thái không hợp lệ');
+        throw new Error("Trạng thái không hợp lệ");
       }
 
       const order = await OrderModel.findById(id);
       if (!order) {
-        throw new Error('Đơn hàng không tồn tại');
+        throw new Error("Đơn hàng không tồn tại");
       }
 
       const affectedRows = await OrderModel.updateStatus(id, status);
-      
+
       if (affectedRows === 0) {
-        throw new Error('Cập nhật trạng thái thất bại');
+        throw new Error("Cập nhật trạng thái thất bại");
       }
 
       return {
         success: true,
-        message: 'Cập nhật trạng thái đơn hàng thành công',
-        data: { status }
+        message: "Cập nhật trạng thái đơn hàng thành công",
+        data: { status },
       };
     } catch (error) {
       throw error;
@@ -248,21 +237,20 @@ class OrderService {
   }
 
   // services/OrderService.js
-static async getOrderDetail(orderId) {
-  const order = await OrderModel.findById(orderId);
-  if (!order) throw new Error('Đơn hàng không tồn tại');
+  static async getOrderDetail(orderId) {
+    const order = await OrderModel.findById(orderId);
+    if (!order) throw new Error("Đơn hàng không tồn tại");
 
-  const items = await OrderModel.getOrderDetails(orderId);
+    const items = await OrderModel.getOrderDetails(orderId);
 
-  return {
-    success: true,
-    data: {
-      order,
-      items
-    }
-  };
-}
-
+    return {
+      success: true,
+      data: {
+        order,
+        items,
+      },
+    };
+  }
 }
 
 // ==================== STATISTICS SERVICE ====================
@@ -272,7 +260,7 @@ class StatisticsService {
       const overview = await StatisticsModel.getOverview();
       return {
         success: true,
-        data: overview
+        data: overview,
       };
     } catch (error) {
       throw error;
@@ -284,7 +272,7 @@ class StatisticsService {
       const products = await StatisticsModel.getTopProducts(limit);
       return {
         success: true,
-        data: products
+        data: products,
       };
     } catch (error) {
       throw error;
@@ -294,18 +282,18 @@ class StatisticsService {
   static async getRevenue(startDate, endDate, groupBy) {
     try {
       if (!startDate || !endDate) {
-        throw new Error('Thiếu thông tin ngày bắt đầu hoặc kết thúc');
+        throw new Error("Thiếu thông tin ngày bắt đầu hoặc kết thúc");
       }
 
-      const validGroupBy = ['day', 'month', 'year'];
+      const validGroupBy = ["day", "month", "year"];
       if (groupBy && !validGroupBy.includes(groupBy)) {
-        throw new Error('Loại thống kê không hợp lệ');
+        throw new Error("Loại thống kê không hợp lệ");
       }
 
-      const revenue = await StatisticsModel.getRevenue(startDate, endDate, groupBy || 'day');
+      const revenue = await StatisticsModel.getRevenue(startDate, endDate, groupBy || "day");
       return {
         success: true,
-        data: revenue
+        data: revenue,
       };
     } catch (error) {
       throw error;
@@ -317,5 +305,5 @@ module.exports = {
   ProductService,
   SaleService,
   OrderService,
-  StatisticsService
+  StatisticsService,
 };

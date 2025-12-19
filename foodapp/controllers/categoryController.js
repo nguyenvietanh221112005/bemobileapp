@@ -21,21 +21,25 @@ class CategoryController {
     }
 
     // GET /category/:id/products - Lấy sản phẩm theo danh mục
-    static async getProductsByCategory(req, res) {
+static async getProductsByCategory(req, res) {
         try {
             const { id } = req.params;
+
+
             const result = await CategoryService.getProductsByCategoryId(id);
-            
+
             return res.status(200).json({
                 success: true,
                 message: 'Lấy sản phẩm theo danh mục thành công',
-                data: result.data,
-                total: result.total
+                data: result.data ?? result,
+                total: result.total ?? result.length
             });
         } catch (error) {
-            return res.status(error.message.includes('không hợp lệ') ? 400 : 500).json({
+            console.error('❌ getProductsByCategory ERROR:', error);
+
+            return res.status(500).json({
                 success: false,
-                message: error.message
+                message: error?.message || 'Lỗi server'
             });
         }
     }

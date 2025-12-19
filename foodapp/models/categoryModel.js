@@ -1,17 +1,14 @@
-const db = require('../database/db');
+const db = require("../database/db");
 
 class CategoryModel {
+  static async getAllCategories() {
+    const [rows] = await db.query(`SELECT * FROM danh_muc ORDER BY ngay_tao DESC`);
+    return rows;
+  }
 
-    static async getAllCategories(){
-        const [rows] = await db.query(
-            `SELECT * FROM danh_muc ORDER BY ngay_tao DESC`
-        );
-        return rows;
-    }
-
-    static async getProductsByCategoryId(categoryId){
-        const [rows] = await db.query(
-            `SELECT sp.*, 
+  static async getProductsByCategoryId(categoryId) {
+    const [rows] = await db.query(
+      `SELECT sp.*, 
                 gg.loai, gg.gia_tri,
                 
                 CASE 
@@ -26,16 +23,16 @@ class CategoryModel {
                 AND gg.ngay_bat_dau <= NOW()
                 AND gg.ngay_ket_thuc >= NOW()
             WHERE sp.danh_muc_id = ? 
-              AND sp.trang_thai = còn hàng
+              AND sp.trang_thai = 'còn hàng'
             ORDER BY sp.so_lan_ban DESC`,
-            [categoryId]
-        );
-        return rows;
-    }
+      [categoryId]
+    );
+    return rows;
+  }
 
-    static async getProductsById(productId){
-        const [rows] = await db.query(
-            `SELECT sp.*, 
+  static async getProductsById(productId) {
+    const [rows] = await db.query(
+      `SELECT sp.*, 
                 dm.ten_danh_muc,
                 gg.loai, gg.gia_tri, gg.ngay_bat_dau, gg.ngay_ket_thuc,
                 
@@ -52,28 +49,23 @@ class CategoryModel {
                 AND gg.ngay_bat_dau <= NOW()
                 AND gg.ngay_ket_thuc >= NOW()
             WHERE sp.id = ?`,
-            [productId]
-        );
-        return rows;
-    }
+      [productId]
+    );
+    return rows;
+  }
 
-    static async searchProductById(nameProduct){
-        // Tách từng từ để tìm kiếm linh hoạt hơn
-        const keywords = nameProduct.trim().split(/\s+/);
-        
-        // Tạo điều kiện LIKE cho mỗi từ khóa
-        const conditions = keywords.map(() => 
-            '(sp.ten LIKE ? OR sp.mo_ta LIKE ?)'
-        ).join(' AND ');
-        
-        // Tạo mảng params cho mỗi từ khóa
-        const params = keywords.flatMap(keyword => [
-            `%${keyword}%`, 
-            `%${keyword}%`
-        ]);
+  static async searchProductById(nameProduct) {
+    // Tách từng từ để tìm kiếm linh hoạt hơn
+    const keywords = nameProduct.trim().split(/\s+/);
 
-        const [rows] = await db.query(
-            `SELECT sp.*, 
+    // Tạo điều kiện LIKE cho mỗi từ khóa
+    const conditions = keywords.map(() => "(sp.ten LIKE ? OR sp.mo_ta LIKE ?)").join(" AND ");
+
+    // Tạo mảng params cho mỗi từ khóa
+    const params = keywords.flatMap((keyword) => [`%${keyword}%`, `%${keyword}%`]);
+
+    const [rows] = await db.query(
+      `SELECT sp.*, 
                 dm.ten_danh_muc,
                 gg.loai, gg.gia_tri,
                 
@@ -100,17 +92,17 @@ class CategoryModel {
             AND trang_thai=còn hàng
             ORDER BY relevance_score DESC, sp.so_lan_ban DESC
             LIMIT 50`,
-            [
-                `${nameProduct}%`,        // Bắt đầu bằng từ khóa (điểm cao nhất)
-                `%${nameProduct}%`,       // Chứa từ khóa
-                ...params                 // Tất cả từ khóa riêng lẻ
-            ]
-        );
-        return rows;
-    }
+      [
+        `${nameProduct}%`, // Bắt đầu bằng từ khóa (điểm cao nhất)
+        `%${nameProduct}%`, // Chứa từ khóa
+        ...params, // Tất cả từ khóa riêng lẻ
+      ]
+    );
+    return rows;
+  }
 
-    static async getHomeProducts(){
-        const [rows] = await db.query(`
+  static async getHomeProducts() {
+    const [rows] = await db.query(`
             SELECT sp.*, 
                 gg.loai, gg.gia_tri,
 
@@ -131,12 +123,12 @@ class CategoryModel {
             ORDER BY sp.so_lan_ban DESC
         `);
 
-        return rows;
-    }
+    return rows;
+  }
 
-    static async getAllProductSale(){
-        const [rows] = await db.query(
-            `SELECT sp.*, 
+  static async getAllProductSale() {
+    const [rows] = await db.query(
+      `SELECT sp.*, 
                 gg.loai, gg.gia_tri, 
                 gg.ngay_bat_dau, gg.ngay_ket_thuc,
                 
@@ -153,9 +145,9 @@ class CategoryModel {
               
             ORDER BY gg.gia_tri DESC
             LIMIT 20`
-        );
-        return rows;
-    }
+    );
+    return rows;
+  }
 }
 
 module.exports = CategoryModel;

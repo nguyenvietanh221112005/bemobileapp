@@ -1,5 +1,5 @@
 // controllers/index.js
-const { ProductService, SaleService, OrderService, StatisticsService } = require('../service/adminService');
+const { ProductService, SaleService, OrderService, StatisticsService } = require("../service/adminService");
 
 // ==================== PRODUCT CONTROLLER ====================
 class ProductController {
@@ -10,7 +10,7 @@ class ProductController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -23,7 +23,7 @@ class ProductController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -36,7 +36,7 @@ class ProductController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -50,56 +50,52 @@ class ProductController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
 
   static async getAllProducts(req, res) {
-  try {
-    const { page = 1, limit = 10, danh_muc_id } = req.query;
-    const result = await ProductService.getAllProducts({
-      page: parseInt(page),
-      limit: parseInt(limit),
-      danh_muc_id
-    });
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    try {
+      const { danh_muc_id } = req.query;
+      const result = await ProductService.getAllProducts({
+        danh_muc_id,
+      });
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
-}
 }
 
 // ==================== SALE CONTROLLER ====================
 class SaleController {
-
   static async getAllSales(req, res) {
-  try {
-    const result = await SaleService.getAllSales();
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message
-    });
+    try {
+      const result = await SaleService.getAllSales();
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: err.message,
+      });
+    }
   }
-}
-
 
   static async getSaleProducts(req, res) {
-  try {
-    const result = await SaleService.getSaleProducts();
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+    try {
+      const result = await SaleService.getSaleProducts();
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
-}
 
   static async createSale(req, res) {
     try {
@@ -108,7 +104,7 @@ class SaleController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -121,7 +117,7 @@ class SaleController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -134,7 +130,7 @@ class SaleController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -149,7 +145,7 @@ class OrderController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -163,25 +159,24 @@ class OrderController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
 
   // controllers/OrderController.js
-static async getOrderDetail(req, res) {
-  try {
-    const { id } = req.params;
-    const result = await OrderService.getOrderDetail(id);
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
+  static async getOrderDetail(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await OrderService.getOrderDetail(id);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
   }
-}
-
 }
 
 // ==================== STATISTICS CONTROLLER ====================
@@ -193,7 +188,7 @@ class StatisticsController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -206,7 +201,7 @@ class StatisticsController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -219,7 +214,7 @@ class StatisticsController {
     } catch (error) {
       res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -229,5 +224,5 @@ module.exports = {
   ProductController,
   SaleController,
   OrderController,
-  StatisticsController
+  StatisticsController,
 };

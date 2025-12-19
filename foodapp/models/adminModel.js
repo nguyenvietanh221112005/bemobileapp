@@ -1,5 +1,5 @@
 // models/index.js
-const db = require('../database/db');
+const db = require("../database/db");
 
 // ==================== PRODUCT MODEL ====================
 class ProductModel {
@@ -15,7 +15,7 @@ class ProductModel {
       productData.gia,
       productData.anh_url,
       0,
-      productData.trang_thai || 'còn hàng'
+      productData.trang_thai || "còn hàng",
     ]);
     return result.insertId;
   }
@@ -33,30 +33,30 @@ class ProductModel {
       productData.gia,
       productData.anh_url,
       productData.trang_thai,
-      id
+      id,
     ]);
     return result.affectedRows;
   }
 
   static async delete(id) {
-    const query = 'DELETE FROM san_pham WHERE id = ?';
+    const query = "DELETE FROM san_pham WHERE id = ?";
     const [result] = await db.execute(query, [id]);
     return result.affectedRows;
   }
 
   static async updateStatus(id, status) {
-    const query = 'UPDATE san_pham SET trang_thai = ? WHERE id = ?';
+    const query = "UPDATE san_pham SET trang_thai = ? WHERE id = ?";
     const [result] = await db.execute(query, [status, id]);
     return result.affectedRows;
   }
 
   static async findById(id) {
-    const query = 'SELECT * FROM san_pham WHERE id = ?';
+    const query = "SELECT * FROM san_pham WHERE id = ?";
     const [rows] = await db.execute(query, [id]);
     return rows[0];
   }
-  static async getAll(limit, offset, danh_muc_id) {
-  let query = `
+  static async getAll(danh_muc_id) {
+    let query = `
     SELECT 
       sp.*,
       dm.ten_danh_muc,
@@ -71,41 +71,37 @@ class ProductModel {
     WHERE 1=1
   `;
 
-  const params = [];
+    const params = [];
 
-  if (danh_muc_id) {
-    query += ' AND sp.danh_muc_id = ?';
-    params.push(danh_muc_id);
+    if (danh_muc_id) {
+      query += " AND sp.danh_muc_id = ?";
+      params.push(danh_muc_id);
+    }
+
+    query += " ORDER BY sp.ngay_tao DESC ";
+
+    const [rows] = await db.execute(query, params);
+    return rows;
   }
 
-  query += ' ORDER BY sp.ngay_tao DESC LIMIT ? OFFSET ?';
-  params.push(limit, offset);
+  static async countAll(danh_muc_id) {
+    let query = "SELECT COUNT(*) as total FROM san_pham WHERE 1=1";
+    const params = [];
 
-  const [rows] = await db.execute(query, params);
-  return rows;
-}
+    if (danh_muc_id) {
+      query += " AND danh_muc_id = ?";
+      params.push(danh_muc_id);
+    }
 
-
-static async countAll(danh_muc_id) {
-  let query = 'SELECT COUNT(*) as total FROM san_pham WHERE 1=1';
-  const params = [];
-
-  if (danh_muc_id) {
-    query += ' AND danh_muc_id = ?';
-    params.push(danh_muc_id);
+    const [rows] = await db.execute(query, params);
+    return rows[0].total;
   }
-
-  const [rows] = await db.execute(query, params);
-  return rows[0].total;
-}
-
 }
 
 // ==================== SALE MODEL ====================
 class SaleModel {
-
   static async getAllSales() {
-  const query = `
+    const query = `
     SELECT 
       gg.id,
       gg.san_pham_id,
@@ -119,12 +115,12 @@ class SaleModel {
     JOIN san_pham sp ON sp.id = gg.san_pham_id
     ORDER BY gg.id DESC
   `;
-  const [rows] = await db.execute(query);
-  return rows;
-}
+    const [rows] = await db.execute(query);
+    return rows;
+  }
 
   static async getSaleProducts() {
-  const query = `
+    const query = `
     SELECT 
       sp.*,
       gg.loai,
@@ -140,9 +136,9 @@ class SaleModel {
       AND sp.trang_thai = 'còn hàng'
     ORDER BY gg.gia_tri DESC
   `;
-  const [rows] = await db.execute(query);
-  return rows;
-}
+    const [rows] = await db.execute(query);
+    return rows;
+  }
 
   static async create(saleData) {
     const query = `
@@ -155,7 +151,7 @@ class SaleModel {
       saleData.gia_tri,
       saleData.ngay_bat_dau,
       saleData.ngay_ket_thuc,
-      saleData.trang_thai || 1
+      saleData.trang_thai || 1,
     ]);
     return result.insertId;
   }
@@ -173,19 +169,19 @@ class SaleModel {
       saleData.ngay_bat_dau,
       saleData.ngay_ket_thuc,
       saleData.trang_thai,
-      id
+      id,
     ]);
     return result.affectedRows;
   }
 
   static async delete(id) {
-    const query = 'DELETE FROM giam_gia WHERE id = ?';
+    const query = "DELETE FROM giam_gia WHERE id = ?";
     const [result] = await db.execute(query, [id]);
     return result.affectedRows;
   }
 
   static async findById(id) {
-    const query = 'SELECT * FROM giam_gia WHERE id = ?';
+    const query = "SELECT * FROM giam_gia WHERE id = ?";
     const [rows] = await db.execute(query, [id]);
     return rows[0];
   }
@@ -243,14 +239,14 @@ class OrderModel {
   }
 
   static async updateStatus(id, status) {
-    const query = 'UPDATE don_hang SET trang_thai = ? WHERE id = ?';
+    const query = "UPDATE don_hang SET trang_thai = ? WHERE id = ?";
     const [result] = await db.execute(query, [status, id]);
     return result.affectedRows;
   }
 
   // models/OrderModel.js
-static async getOrderDetails(orderId) {
-  const query = `
+  static async getOrderDetails(orderId) {
+    const query = `
     SELECT 
       ctdh.id,
       ctdh.so_luong,
@@ -260,10 +256,9 @@ static async getOrderDetails(orderId) {
     JOIN san_pham sp ON ctdh.san_pham_id = sp.id
     WHERE ctdh.don_hang_id = ?
   `;
-  const [rows] = await db.execute(query, [orderId]);
-  return rows;
-}
-
+    const [rows] = await db.execute(query, [orderId]);
+    return rows;
+  }
 }
 
 // ==================== STATISTICS MODEL ====================
@@ -286,7 +281,7 @@ class StatisticsModel {
       `,
       pendingOrders: `
         SELECT COUNT(*) as total FROM don_hang WHERE trang_thai = 'chờ xác nhận'
-      `
+      `,
     };
 
     const [revenueResult] = await db.execute(queries.totalRevenue);
@@ -300,7 +295,7 @@ class StatisticsModel {
       totalOrders: ordersResult[0].total,
       totalProducts: productsResult[0].total,
       totalUsers: usersResult[0].total,
-      pendingOrders: pendingResult[0].total
+      pendingOrders: pendingResult[0].total,
     };
   }
 
@@ -318,24 +313,24 @@ class StatisticsModel {
       LEFT JOIN don_hang dh ON dhct.don_hang_id = dh.id
       WHERE dh.trang_thai = 'đã giao hàng' OR dh.trang_thai IS NULL
       GROUP BY sp.id
-      ORDER BY total_sold DESC
+      ORDER BY so_lan_ban DESC
       LIMIT ?
     `;
     const [rows] = await db.execute(query, [limit]);
     return rows;
   }
 
-  static async getRevenue(startDate, endDate, groupBy = 'day') {
+  static async getRevenue(startDate, endDate, groupBy = "day") {
     let dateFormat;
-    switch(groupBy) {
-      case 'month':
-        dateFormat = '%Y-%m';
+    switch (groupBy) {
+      case "month":
+        dateFormat = "%Y-%m";
         break;
-      case 'year':
-        dateFormat = '%Y';
+      case "year":
+        dateFormat = "%Y";
         break;
       default:
-        dateFormat = '%Y-%m-%d';
+        dateFormat = "%Y-%m-%d";
     }
 
     const query = `
@@ -349,7 +344,7 @@ class StatisticsModel {
       GROUP BY period
       ORDER BY period ASC
     `;
-    
+
     const [rows] = await db.execute(query, [dateFormat, startDate, endDate]);
     return rows;
   }
@@ -359,5 +354,5 @@ module.exports = {
   ProductModel,
   SaleModel,
   OrderModel,
-  StatisticsModel
+  StatisticsModel,
 };
